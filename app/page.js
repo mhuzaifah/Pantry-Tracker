@@ -13,8 +13,9 @@ import {
     Select,
     Stack,
     TextField,
-    Typography
+    Typography, Card, CardContent, CardActions
 } from "@mui/material";
+import { Unstable_NumberInput as NumberInput } from '@mui/base/Unstable_NumberInput';
 // import SearchIcon from '@mui/icons-material/Search';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faAdd, faSearch, faSubtract, faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -57,39 +58,46 @@ const Home = () => {
         await updateInventory()
     }
 
-    const removeItem = async (item) => {
+    const decrementItem = async (item) => {
         const docRef = doc(collection(firestore, 'ingredients'), item.toLowerCase())
         const docSnap = await getDoc(docRef)
 
-        if(docSnap.exists()) {
-            const {existingQuantity, existingUnit} = docSnap.data()
-            if (quantity === 1) {
-                await deleteDoc(docRef)
-            }
-            else {
-                await setDoc(docRef, {quantity: existingQuantity-1, unit: existingUnit})
-            }
-        }
-
-        await updateInventory()
-    }
-
-    const addItem = async (item, quantity, unit) => {
-        const docRef = doc(collection(firestore, 'ingredients'), item.toLowerCase())
-        const docSnap = await getDoc(docRef)
-
-        if(docSnap.exists()) {
-            const {existingQuantity, existingUnit} = docSnap.data()
-            await setDoc(docRef, {quantity: existingQuantity+quantity, unit: existingUnit})
+        const {quantity, unit} = docSnap.data()
+        if (quantity === 1) {
+            await deleteDoc(docRef)
         }
         else {
-            await setDoc(docRef, {quantity: quantity, unit: unit === "count" ? '' : unit })
+            await setDoc(docRef, {quantity: quantity-1, unit: unit})
+        }
+
+        await updateInventory()
+    }
+
+    const incrementItem = async (item) => {
+        const docRef = doc(collection(firestore, 'ingredients'), item.toLowerCase())
+        const docSnap = await getDoc(docRef)
+
+        const { quantity, unit } = docSnap.data()
+        await setDoc(docRef, {quantity: quantity+1, unit: unit})
+
+        await updateInventory()
+    }
+
+    const addItem = async (item, itemQuantity, itemUnit) => {
+        const docRef = doc(collection(firestore, 'ingredients'), item.toLowerCase())
+        const docSnap = await getDoc(docRef)
+
+        if(docSnap.exists()) {
+            const { quantity, unit } = docSnap.data()
+            await setDoc(docRef, {quantity: quantity+itemQuantity, unit: unit})
+        }
+        else {
+            await setDoc(docRef, {quantity: itemQuantity, unit: itemUnit === "count" ? '' : itemUnit })
         }
 
         await updateInventory()
 
     }
-
 
     function extractJSONArr(inputJSONStr) {
         const pattern = /\{[^{}]*/g
@@ -235,11 +243,11 @@ const Home = () => {
             <Box width="90%" height={{xs:'auto', md:'80%'}} display="flex" sx={{ flexDirection:{xs:'column', md:'row'}, alignItems:{xs:'center', md:'unset'}}} justifyContent='center' gap={3}>
 
                 {/* INGREDIENTS SHOWCASE */}
-                <Box width={{xs:'90%', md:'60%'}} >
-                    <Paper elevation={4} sx={{ height:'100%', flex: 1, borderRadius: 3 }}>
+                <Box width={{ xs: '90%', md: '60%' }}>
+                    <Paper elevation={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden' }}>
                         <Box
                             bgcolor="#C2D3CD"
-                            sx={{borderTopRightRadius:'12px', borderTopLeftRadius:'12px'}}
+                            sx={{ borderTopRightRadius: '12px', borderTopLeftRadius: '12px' }}
                             display="flex"
                             justifyContent="center"
                             alignItems="center"
@@ -276,37 +284,43 @@ const Home = () => {
                                 />
                             </Stack>
                         </Box>
-                        <Stack width="100%" height="90%" spacing={1} overflow="auto">
-                            {inventory.filter(({ name }) => filter.toLowerCase() === name.slice(0, filter.length).toLowerCase()).map(({ name, quantity, unit }) => (
-                                <Box
-                                    key={name}
-                                    width="100%"
-                                    minHeight="50px"
-                                    display="flex"
-                                    justifyContent="space-between"
-                                    alignItems="center"
-                                    padding={2}
-                                    gap={2}
-                                    bgcolor="#f0f0f0"
-                                >
-                                    <Typography variant="h5" color='#56494C' textAlign="left" width="20%">
-                                        {name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                                    </Typography>
-                                    <Typography variant="h5" color='#56494C' textAlign="center">{quantity} {unit}</Typography>
-                                    <Stack direction="row" spacing={2}>
-                                        <IconButton size={'large'} sx={{boxShadow:'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px', backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }} aria-label="add" onClick={() => addItem(name)}>
-                                            <FontAwesomeIcon size={'xs'} icon={faAdd} />
-                                        </IconButton>
-                                        <IconButton size={'large'} sx={{boxShadow:'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px', backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }} aria-label="subtract" onClick={() => removeItem(name)}>
-                                            <FontAwesomeIcon size={'xs'} icon={faSubtract} />
-                                        </IconButton>
-                                        <IconButton size={'large'} sx={{boxShadow:'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px', backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }} aria-label="delete" onClick={() => deleteItem(name)}>
-                                            <FontAwesomeIcon size={'xs'} icon={faTrash} />
-                                        </IconButton>
-                                    </Stack>
-                                </Box>
-                            ))}
-                        </Stack>
+                        <Box
+                            sx={{
+                                flex: 1, // Allow this Box to grow and take available space
+                                overflowY: 'auto', // Enables vertical scrolling
+                                padding: 2, // Add padding if needed
+                            }}
+                        >
+                            <Stack width="100%" spacing={2}>
+                                {inventory.filter(({ name }) => filter.toLowerCase() === name.slice(0, filter.length).toLowerCase()).map(({ name, quantity, unit }) => (
+                                    <Card key={name} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                                        <CardContent>
+                                            <Stack direction="row" alignItems="center" spacing={2} justifyContent="space-between">
+                                                <Typography variant="h5" color='#56494C' flex={1}>
+                                                    {name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                                </Typography>
+                                                <Box flex={1} display="flex" justifyContent="center">
+                                                    <Typography variant="h6" color='#56494C'>
+                                                        {quantity} {unit}
+                                                    </Typography>
+                                                </Box>
+                                                <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                                                    <IconButton size={'large'} sx={{ boxShadow: 'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px', backgroundColor: '#9FA4A9', '&:hover': { backgroundColor: '#56494C' } }} aria-label="add" onClick={() => incrementItem(name)}>
+                                                        <FontAwesomeIcon size={'xs'} icon={faAdd} />
+                                                    </IconButton>
+                                                    <IconButton size={'large'} sx={{ boxShadow: 'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px', backgroundColor: '#9FA4A9', '&:hover': { backgroundColor: '#56494C' } }} aria-label="subtract" onClick={() => decrementItem(name)}>
+                                                        <FontAwesomeIcon size={'xs'} icon={faSubtract} />
+                                                    </IconButton>
+                                                    <IconButton size={'large'} sx={{ boxShadow: 'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px', backgroundColor: '#9FA4A9', '&:hover': { backgroundColor: '#56494C' } }} aria-label="delete" onClick={() => deleteItem(name)}>
+                                                        <FontAwesomeIcon size={'xs'} icon={faTrash} />
+                                                    </IconButton>
+                                                </Stack>
+                                            </Stack>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </Stack>
+                        </Box>
                     </Paper>
                 </Box>
 
@@ -315,12 +329,12 @@ const Home = () => {
 
                     {/* GENERATE RECIPES */}
                     <Paper elevation={4} sx={{ flex: 1, borderRadius: 3 }}>
-                        <Box >
+                        <Box>
                             <Box
                                 width="100%"
                                 height="10%"
                                 bgcolor="#C2D3CD"
-                                sx={{borderTopRightRadius:'12px', borderTopLeftRadius:'12px'}}
+                                sx={{ borderTopRightRadius: '12px', borderTopLeftRadius: '12px' }}
                                 display="flex"
                                 justifyContent="center"
                                 alignItems="center"
@@ -328,30 +342,33 @@ const Home = () => {
                             >
                                 <Stack width="100%" direction="row" justifyContent="space-between">
                                     <Typography variant="h3" color='#56494C'>Recipes</Typography>
-                                    <Button sx={{backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }} variant="contained" onClick={generateRecipes}>
+                                    <Button sx={{ backgroundColor: '#9FA4A9', '&:hover': { backgroundColor: '#56494C' } }} variant="contained" onClick={generateRecipes}>
                                         Generate
                                     </Button>
                                 </Stack>
                             </Box>
-                            <Stack width="100%" height="90%" maxHeight='450px' spacing={1} overflow='auto'>
-                                {recipes.map((recipeJSON, index) => (
-                                    <Box
-                                        key={index}
-                                        width="100%"
-                                        minHeight="50px"
-                                        display="flex"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                        padding={2}
-                                        gap={2}
-                                        bgcolor="#f0f0f0"
-                                    >
-                                        <Typography variant="h5" color='#56494C' textAlign="left">
-                                            {recipeJSON.recipe_name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                                        </Typography>
-                                    </Box>
-                                ))}
-                            </Stack>
+                            <Box
+                                sx={{
+                                    height: '90%', // Set height to fill the remaining space
+                                    maxHeight: '450px',
+                                    overflowY: 'auto',
+                                    padding: 2,
+                                }}
+                            >
+                                <Stack width="100%" spacing={2}>
+                                    {recipes.map((recipeJSON, index) => (
+                                        <Card key={index} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                                            <CardContent>
+                                                <Stack direction="row" alignItems="center" spacing={2}>
+                                                    <Typography variant="h5" color='#56494C' flex={1}>
+                                                        {recipeJSON.recipe_name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                                    </Typography>
+                                                </Stack>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </Stack>
+                            </Box>
                         </Box>
                     </Paper>
 
@@ -395,12 +412,13 @@ const Home = () => {
                             onChange={(e) => setItemName(e.target.value)}
                         />
                         <TextField
-                            label="Number"
+                            label="Quantity"
                             type="number"
                             InputLabelProps={{ shrink: true }}
                             variant="outlined"
                             value={itemQuantity}
-                            onChange={(e) => setItemQuantity(e.target.value)}
+                            onChange={(e) => setItemQuantity(parseInt(e.target.value, 10))}
+                            InputProps={{ inputProps: { min: 0 } }}
                         />
                         <FormControl required sx={{ width: '20%' }}>
                             <InputLabel>Unit</InputLabel>
