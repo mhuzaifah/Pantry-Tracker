@@ -426,6 +426,7 @@ const Home = () => {
                                 addItem(itemName, itemQuantity, itemUnit)
                                 setItemName('')
                                 setItemUnit('')
+                                setItemQuantity(0)
                                 handleClose();
                             }}
                         >
