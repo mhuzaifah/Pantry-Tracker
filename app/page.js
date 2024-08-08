@@ -80,7 +80,7 @@ const Home = () => {
 
         if(docSnap.exists()) {
             const {existingQuantity, existingUnit} = docSnap.data()
-            await setDoc(docRef, {quantity: existingQuantity+1, unit: existingUnit})
+            await setDoc(docRef, {quantity: existingQuantity+quantity, unit: existingUnit})
         }
         else {
             await setDoc(docRef, {quantity: quantity, unit: unit === "count" ? '' : unit })
@@ -422,12 +422,12 @@ const Home = () => {
                         <Button
                             sx={{backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }}
                             variant="contained"
-                            onClick={() => {
-                                addItem(itemName, itemQuantity, itemUnit)
+                            onClick={async () => {
+                                await addItem(itemName, itemQuantity, itemUnit)
                                 setItemName('')
                                 setItemUnit('')
                                 setItemQuantity(0)
-                                handleClose();
+                                handleClose()
                             }}
                         >
                             Add
