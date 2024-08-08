@@ -395,11 +395,12 @@ const Home = () => {
                             onChange={(e) => setItemName(e.target.value)}
                         />
                         <TextField
-                            id="filled-number"
                             label="Number"
                             type="number"
                             InputLabelProps={{ shrink: true }}
                             variant="outlined"
+                            value={itemQuantity}
+                            onChange={(e) => setItemQuantity(e.target.value)}
                         />
                         <FormControl required sx={{ width: '20%' }}>
                             <InputLabel>Unit</InputLabel>
@@ -422,9 +423,9 @@ const Home = () => {
                             sx={{backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }}
                             variant="contained"
                             onClick={() => {
-                                addItem(itemName, itemUnit);
-                                setItemName('');
-                                setItemUnit('');
+                                addItem(itemName, itemQuantity, itemUnit)
+                                setItemName('')
+                                setItemUnit('')
                                 handleClose();
                             }}
                         >
