@@ -33,7 +33,7 @@ const Home = () => {
     /* Camera Vars */
     const [cameraOn, setCameraOn] = useState(false);
     const camera = useRef(null);
-    const [image, setImage] = useState(null);
+    //const [image, setImage] = useState(null);
 
     /* Recipes Vars */
     const [recipes, setRecipes] = useState([])
@@ -178,7 +178,7 @@ const Home = () => {
         }
     }
 
-    const analyzeIngredientImage = async () => {
+    const analyzeIngredientImage = async (image) => {
 
         const imageToAnalyze = {
             inlineData: {
@@ -311,10 +311,11 @@ const Home = () => {
                 </Box>
 
                 {/* RIGHT COLUMN */}
-                <Box minHeight='500px' width={{xs:'90%', md:'40%'}} lex={1} display="flex" flexDirection="column" gap={3}>
+                <Box width={{xs:'90%', md:'40%'}} lex={1} display="flex" flexDirection="column" gap={3}>
+
                     {/* GENERATE RECIPES */}
                     <Paper elevation={4} sx={{ flex: 1, borderRadius: 3 }}>
-                        <Box>
+                        <Box >
                             <Box
                                 width="100%"
                                 height="10%"
@@ -332,7 +333,7 @@ const Home = () => {
                                     </Button>
                                 </Stack>
                             </Box>
-                            <Stack width="100%" height="90%" spacing={1} overflow="auto">
+                            <Stack width="100%" height="90%" maxHeight='450px' spacing={1} overflow='auto'>
                                 {recipes.map((recipeJSON, index) => (
                                     <Box
                                         key={index}
@@ -458,9 +459,8 @@ const Home = () => {
                             sx={{backgroundColor:'#9FA4A9', '&:hover':{ backgroundColor:'#56494C' } }}
                             variant="contained"
                             onClick={() => {
-                                setImage(camera.current.takePhoto());
-                                analyzeIngredientImage();
-                                handleCloseCamera();
+                                analyzeIngredientImage(camera.current.takePhoto())
+                                handleCloseCamera()
                             }}
                         >
                             Take Pic
